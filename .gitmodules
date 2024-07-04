@@ -1,0 +1,3 @@
+[submodule "EC_lib"]
+	path = EC_lib
+	url = https://github.com/IRobot-EC-2024/EC_lib
