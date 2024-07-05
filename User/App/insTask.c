@@ -85,7 +85,7 @@ void INS_Task(void)
 			INS.ins_flag = 1; // 四元数基本收敛，加速度也基本收敛，可以开始底盘任务
 			// 获取最终数据
 			INS.Roll = mahony.roll;
-			INS.Pitch = -mahony.pitch;
+			INS.Pitch = mahony.pitch;
 			INS.Yaw = mahony.yaw;
 
 			// INS.YawTotalAngle=INS.YawTotalAngle+INS.Gyro[2]*0.001f;
