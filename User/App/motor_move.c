@@ -19,7 +19,9 @@ extern vmc_t vmc_L;
 extern first_order_filter_type_t  wheel_l_speed_filter;
 extern first_order_filter_type_t  wheel_r_speed_filter;
 extern first_order_filter_type_t  LFjoint_motor_filter;
-extern first_order_filter_type_t  LBjoint_motor_filter;																				
+extern first_order_filter_type_t  LBjoint_motor_filter;
+
+extern INS_t INS;																				
 																				
 double flag=0;
 void motorMoveTask(void *argument)
@@ -61,7 +63,15 @@ void motorMoveTask(void *argument)
 			else if(flag == 5)		
 				Nor_printf("%f, %f\r\n",vmc_L.phi4, vmc_L.d_phi4);
 			else if(flag == 6)		
-				Nor_printf("%f, %f\r\n",LFjoint_motor_filter.out, chassis_move.joint_motor[0].para.vel);
+				Nor_printf("%f, %f\r\n",vmc_L.theta, vmc_L.d_theta);
+			else if(flag == 106)		
+				Nor_printf("%f, %f\r\n",vmc_R.theta, vmc_R.d_theta);
+			else if(flag == 7)		
+				Nor_printf("%f, %f\r\n",chassis_move.pitchL, chassis_move.pitchGyroL);
+			else if(flag == 8)		
+				Nor_printf("%f, %f, %f\r\n", INS.Gyro[0], INS.Gyro[1], INS.Gyro[2]);
+//			else if(flag == 8)		
+//				Nor_printf("%f, %f, %f\r\n", INS. INS.Pitch, INS.Roll);
 			
         osDelay(1);
     }

@@ -171,9 +171,9 @@ void chassisR_update(chassis_t *chassis, vmc_t *vmc, INS_t *ins)
 
   vmc->d_phi4 = chassis->joint_motor[3].para.vel;
   vmc->d_phi1 = chassis->joint_motor[2].para.vel;
-
-  chassis->pitchR = ins->Pitch;
-  chassis->pitchGyroR = ins->Gyro[1];
+	
+  chassis->pitchR = -ins->Pitch;
+  chassis->pitchGyroR = -ins->Gyro[1];
 
   chassis->total_yaw = ins->YawTotalAngle;
   chassis->roll = ins->Roll;
@@ -186,7 +186,7 @@ void chassisR_update(chassis_t *chassis, vmc_t *vmc, INS_t *ins)
 void chassisR_cal(chassis_t *chassis, vmc_t *vmc, INS_t *ins, PidTypeDef *legr, float *K)
 {
   // VMC运动学正解
-  VMC_R_cal1(vmc, ins, 2.0f * 0.001f);
+  VMC_R_cal1(vmc, chassis->pitchR, chassis->pitchGyroR);
 
   for (int i = 0; i < 12; i++)
   {

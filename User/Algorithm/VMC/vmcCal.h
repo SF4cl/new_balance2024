@@ -84,8 +84,8 @@ typedef struct{
 }vmc_t;
 
 extern void VMC_init(vmc_t *vmc);
-extern void VMC_R_cal1(vmc_t *vmc, INS_t *ins, float dt);
-extern void VMC_L_cal1(vmc_t *vmc, INS_t *ins, float dt);
+extern void VMC_R_cal1(vmc_t *vmc, float bodyPitchAngle,float bodyPitchGyro);
+extern void VMC_L_cal1(vmc_t *vmc, float bodyPitchAngle,float bodyPitchGyro);
 extern void VMC_cal2(vmc_t *vmc);
 
 #endif
