@@ -11,12 +11,12 @@ void VMC_init(vmc_t *vmc)
     vmc->l4 = 0.12f;
 }
 
-void VMC_R_cal1(vmc_t *vmc, INS_t *ins, float dt)
+void VMC_R_cal1(vmc_t *vmc, float bodyPitchAngle,float bodyPitchGyro)
 {
     static float pitch = 0.0f;
     static float pitchGyro = 0.0f;
-    pitch = ins->Pitch;
-    pitchGyro = ins->Gyro[1];
+    pitch = bodyPitchAngle;
+    pitchGyro = bodyPitchGyro;
 
     vmc->yD = vmc->l4 * arm_sin_f32(vmc->phi4);
     vmc->yB = vmc->l1 * arm_sin_f32(vmc->phi1);
@@ -50,16 +50,16 @@ void VMC_R_cal1(vmc_t *vmc, INS_t *ins, float dt)
     vmc->d_phi0 = -(vmc->d_xc * vmc->yC - vmc->d_yc * (vmc->xC - vmc->l5 / 2.0f)) / (vmc->L0 * vmc->L0);
     vmc->d_alpha = 0.0f - vmc->d_phi0;
     // ! theta的方向
-    vmc->theta = -pi / 2.0f - pitch + vmc->phi0;
-    vmc->d_theta = pitchGyro + vmc->d_phi0;
+    vmc->theta = vmc->phi0- pitch - pi/2.0f;
+    vmc->d_theta = -pitchGyro + vmc->d_phi0;
 }
 
-void VMC_L_cal1(vmc_t *vmc, INS_t *ins, float dt)
+void VMC_L_cal1(vmc_t *vmc, float bodyPitchAngle,float bodyPitchGyro)
 {
     static float pitch = 0.0f;
     static float pitchGyro = 0.0f;
-    pitch = ins->Pitch;
-    pitchGyro = ins->Gyro[1];
+    pitch = bodyPitchAngle;
+    pitchGyro = bodyPitchGyro;
 
     vmc->yD = vmc->l4 * arm_sin_f32(vmc->phi4);
     vmc->yB = vmc->l1 * arm_sin_f32(vmc->phi1);
@@ -90,31 +90,10 @@ void VMC_L_cal1(vmc_t *vmc, INS_t *ins, float dt)
     vmc->L0 = sqrt((vmc->xC - vmc->l5 / 2.0f) * (vmc->xC - vmc->l5 / 2.0f) + vmc->yC * vmc->yC);
     vmc->phi0 = atan2f(vmc->yC, vmc->xC - vmc->l5 / 2.0f);
 
-    if (vmc->first_flag == 0)
-    {
-        vmc->last_phi0 = vmc->phi0;
-        vmc->first_flag = 1;
-    }
-
-    // vmc->d_phi0 = (vmc->phi0 - vmc->last_phi0) / dt;
     vmc->d_phi0 = -(vmc->d_xc * vmc->yC - vmc->d_yc * (vmc->xC - vmc->l5 / 2.0f)) / (vmc->L0 * vmc->L0);
-    vmc->d_alpha = 0.0f - vmc->d_phi0;
 
-    vmc->theta = -pi / 2.0f - pitch + vmc->phi0;
-    // vmc->theta = pi/2.0f + pitch - vmc->phi0;
-    vmc->d_theta = pitchGyro + vmc->d_phi0;
-    //		vmc->d_theta = pitchGyro - vmc->d_phi0;
-
-    vmc->last_phi0 = vmc->phi0;
-
-    vmc->d_L0 = (vmc->L0 - vmc->last_L0) / dt;
-    vmc->d2_L0 = (vmc->d_L0 - vmc->last_d_L0) / dt;
-
-    vmc->last_L0 = vmc->L0;
-    vmc->last_d_L0 = vmc->d_L0;
-
-    vmc->d2_theta = (vmc->d_theta - vmc->last_d_theta) / dt;
-    vmc->last_d_theta = vmc->d_theta;
+    vmc->theta = vmc->phi0-pitch- pi/2.0f;
+    vmc->d_theta = -pitchGyro + vmc->d_phi0;
 }
 
 void VMC_cal2(vmc_t *vmc)

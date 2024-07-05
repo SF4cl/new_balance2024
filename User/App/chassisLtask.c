@@ -142,16 +142,19 @@ void chassisL_update(chassis_t *chassis, vmc_t *vmc, INS_t *ins)
 {
   vmc->phi4 = -chassis->joint_motor[0].para.pos + pi / 2.0f - 1.9823f;
   vmc->phi1 = -chassis->joint_motor[1].para.pos + pi / 2.0f + 1.9823f;
+  
+  vmc->d_phi1 = -chassis->joint_motor[1].para.vel;
+  vmc->d_phi4 = -chassis->joint_motor[0].para.vel;
 
-  chassis->pitchL = ins->Pitch;
-  chassis->pitchGyroL = ins->Gyro[1];
+  chassis->pitchL = -ins->Pitch;
+  chassis->pitchGyroL = -ins->Gyro[1];
   // todo: filter
   // todo: 倒地检测
 }
 
 void chassisL_cal(chassis_t *chassis, vmc_t *vmc, INS_t *ins, PidTypeDef *legl, float *K)
 {
-  VMC_L_cal1(vmc, ins, 2.0f * 0.001f);
+  VMC_L_cal1(vmc, chassis->pitchL, chassis->pitchGyroL);
 
   for (int i = 0; i < 12; i++)
   {
