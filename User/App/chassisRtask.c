@@ -10,49 +10,12 @@ extern vmc_t vmc_L;
 extern RM_Remote_t *remote;
 extern PidTypeDef LegL_Pid;
 
-extern first_order_filter_type_t phi1_l_filter;
-extern first_order_filter_type_t d_phi1_l_filter;
-extern first_order_filter_type_t phi4_l_filter;
-extern first_order_filter_type_t d_phi4_l_filter;
-extern first_order_filter_type_t phi0_l_filter;
-extern first_order_filter_type_t d_phi0_l_filter;
-extern first_order_filter_type_t theta_l_filter;
-extern first_order_filter_type_t d_theta_l_filter;
-extern first_order_filter_type_t L0_l_filter;
-extern first_order_filter_type_t wheel_l_speed_filter;
-extern first_order_filter_type_t pitchGryoL_filter;
-
 vmc_t vmc_R;
 chassis_t chassis_move;
 
 PidTypeDef LegR_Pid;
 PidTypeDef Turn_Pid;
 PidTypeDef Tp_Pid;
-
-first_order_filter_type_t phi1_r_filter;
-first_order_filter_type_t d_phi1_r_filter;
-first_order_filter_type_t phi4_r_filter;
-first_order_filter_type_t d_phi4_r_filter;
-first_order_filter_type_t phi0_r_filter;
-first_order_filter_type_t d_phi0_r_filter;
-first_order_filter_type_t theta_r_filter;
-first_order_filter_type_t d_theta_r_filter;
-first_order_filter_type_t L0_r_filter;
-first_order_filter_type_t wheel_r_speed_filter;
-first_order_filter_type_t pitchGryoR_filter;
-first_order_filter_type_t wheel_speed_filter;
-first_order_filter_type_t RFjoint_motor_filter;
-first_order_filter_type_t RBjoint_motor_filter;
-
-fp32 rpara1[1] = {0.01};
-fp32 rpara2[1] = {0.008};
-fp32 rpara3[1] = {0.003};
-fp32 rpara4[1] = {0.007};
-fp32 rpara5[1] = {0.008};
-fp32 rpara6[1] = {0.05};
-fp32 rpara7[1] = {0.008};
-fp32 rpara8[1] = {0.003};
-fp32 rparat[1] = {0.003};
 
 float LQR_K_R[12] = {
     -15.7725, -1.4432, -2.8507, -2.8933, 9.5062, 2.1972,
@@ -75,8 +38,17 @@ float Poly_Coefficient[12][4] = {
 
 };
 
-float crtR = 35.0f;
+first_order_filter_type_t d_phi1_r_filter;
+first_order_filter_type_t d_phi4_r_filter;
+first_order_filter_type_t pitch_angle_r_filter;
+first_order_filter_type_t pitch_gyro_r_filter;
 
+float d_phi1_r_filter_para[1] = {0.005};
+float d_phi4_r_filter_para[1] = {0.005};
+float pitch_angle_r_filter_para[1] = {0.005};
+float pitch_gyro_r_filter_para[1] = {0.005};
+
+float crtR = 35.0f;
 float Rtest = 0.0f;
 
 void chassisRtask(void)
@@ -162,6 +134,12 @@ void chassisR_init(chassis_t *chassis, vmc_t *vmc, PidTypeDef *legr)
   VMC_init(vmc);
 
   PID_init(legr, PID_POSITION, legr_pid, LEG_RIGHT_PID_MAX_OUT, LEG_RIGHT_PID_MAX_IOUT);
+
+  // 滤波器初始化
+  first_order_filter_init(d_phi1_r_filter, 0.002f, d_phi1_r_filter_para);
+  first_order_filter_init(d_phi4_r_filter, 0.002f, d_phi4_r_filter_para);
+  first_order_filter_init(pitch_angle_r_filter, 0.002f, pitch_angle_r_filter_para);
+  first_order_filter_init(pitch_gyro_r_filter, 0.002f, pitch_gyro_r_filter_para);
 }
 
 void chassisR_update(chassis_t *chassis, vmc_t *vmc, INS_t *ins)
@@ -171,7 +149,7 @@ void chassisR_update(chassis_t *chassis, vmc_t *vmc, INS_t *ins)
 
   vmc->d_phi4 = chassis->joint_motor[3].para.vel;
   vmc->d_phi1 = chassis->joint_motor[2].para.vel;
-	
+
   chassis->pitchR = -ins->Pitch;
   chassis->pitchGyroR = -ins->Gyro[1];
 
@@ -179,7 +157,17 @@ void chassisR_update(chassis_t *chassis, vmc_t *vmc, INS_t *ins)
   chassis->roll = ins->Roll;
 
   chassis->theta_err = -vmc->theta - vmc_L.theta;
-  // todo：fliter
+
+  first_order_filter_calc(&d_phi1_r_filter, vmc->d_phi1);
+  first_order_filter_cali(&d_phi4_r_filter, vmc->d_phi4);
+  first_order_filter_cali(&pitch_angle_r_filter, chassis->pitchR);
+  first_order_filter_cali(&pitch_gyro_r_filter, chassis->pitchGyroR);
+
+  // 把滤波后的值赋给vmc
+  vmc->d_phi1 = d_phi1_r_filter.out;
+  vmc->d_phi4 = d_phi4_r_filter.out;
+  chassis->pitchR = pitch_angle_r_filter.out;
+  chassis->pitchGyroR = pitch_gyro_r_filter.out;
   // todo: 倒地检测
 }
 
