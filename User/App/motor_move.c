@@ -16,10 +16,10 @@
 extern chassis_t chassis_move;
 extern vmc_t vmc_R;
 extern vmc_t vmc_L;
-extern first_order_filter_type_t  wheel_l_speed_filter;
-extern first_order_filter_type_t  wheel_r_speed_filter;
-extern first_order_filter_type_t  LFjoint_motor_filter;
-extern first_order_filter_type_t  LBjoint_motor_filter;
+extern first_order_filter_type_t d_phi1_l_filter;
+extern first_order_filter_type_t d_phi4_l_filter;
+extern first_order_filter_type_t pitch_gyro_l_filter;
+extern first_order_filter_type_t wheel_r_speed_filter;
 
 extern INS_t INS;																				
 																				
@@ -51,7 +51,7 @@ void motorMoveTask(void *argument)
 //				Nor_printf("%f,%f,%f,%f,%f,%f\r\n",chassis_move.wheel_motor[0].T_wheel/6.33f,chassis_move.wheel_motor[1].T_wheel/6.33f,vmc_L.T_set[0]/6.0f,vmc_L.T_set[1]/6.0f,vmc_R.T_set[0]/6.0f,vmc_R.T_set[1]/6.0f);
 //			Nor_printf("%f, %f\r\n",chassis_move.wheel_motor[0].para.torque, chassis_move.wheel_motor[0].para.speed);
 			if(flag == 0)
-				Nor_printf("%f, %f\r\n",vmc_L.d_phi0, vmc_L.phi0);
+				Nor_printf("%f, %f\r\n",wheel_r_speed_filter.out, chassis_move.wheel_motor[1].para.speed);
 			else if(flag == 1)
 				Nor_printf("%f, %f\r\n",vmc_L.L0, vmc_L.d_L0);
 			else if(flag == 2)	
@@ -70,6 +70,13 @@ void motorMoveTask(void *argument)
 				Nor_printf("%f, %f\r\n",chassis_move.pitchL, chassis_move.pitchGyroL);
 			else if(flag == 8)		
 				Nor_printf("%f, %f, %f\r\n", INS.Gyro[0], INS.Gyro[1], INS.Gyro[2]);
+			else if(flag == 99)		
+				Nor_printf("%f, %f\r\n",-chassis_move.joint_motor[1].para.vel, d_phi1_l_filter.out);
+			else if(flag == 88)		
+				Nor_printf("%f, %f\r\n",-chassis_move.joint_motor[0].para.vel, d_phi4_l_filter.out);
+			else if(flag == 66)		
+				Nor_printf("%f, %f\r\n",-INS.Gyro[1], pitch_gyro_l_filter.out);
+			
 //			else if(flag == 8)		
 //				Nor_printf("%f, %f, %f\r\n", INS. INS.Pitch, INS.Roll);
 			

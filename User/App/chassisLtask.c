@@ -2,23 +2,11 @@
 #include "fdcan.h"
 #include "cmsis_os.h"
 
-vmc_t vmc_L;
-
-PidTypeDef LegL_Pid;
-
 extern DMA_HandleTypeDef hdma_usart1_tx;
-
-fp32 lpara1[1] = {0.01};
-fp32 lpara2[1] = {0.008};
-fp32 lpara3[1] = {0.003};
-fp32 lpara4[1] = {0.007};
-fp32 lpara5[1] = {0.008};
-fp32 lpara6[1] = {0.05};
-fp32 lpara7[1] = {0.03};
 
 extern chassis_t chassis_move;
 extern INS_t INS;
-extern vmc_t vmc_R;
+// extern vmc_t vmc_R;
 
 float LQR_K_L[12] = {
     -15.7725, -1.4432, -2.8507, -2.8933, 9.5062, 2.1972,
@@ -26,15 +14,17 @@ float LQR_K_L[12] = {
 
 extern float Poly_Coefficient[12][4];
 
+vmc_t vmc_L;
+
+PidTypeDef LegL_Pid;
+
 first_order_filter_type_t d_phi1_l_filter;
 first_order_filter_type_t d_phi4_l_filter;
-first_order_filter_type_t pitch_angle_l_filter;
 first_order_filter_type_t pitch_gyro_l_filter;
 
-float d_phi1_l_filter_para[1] = {0.005};
-float d_phi4_l_filter_para[1] = {0.005};
-float pitch_angle_l_filter_para[1] = {0.005};
-float pitch_gyro_l_filter_para[1] = {0.005};
+float d_phi1_l_filter_para[1] = {0.05};
+float d_phi4_l_filter_para[1] = {0.05};
+float pitch_gyro_l_filter_para[1] = {0.01};
 
 float crtL = 35.0f;
 float Ltest = 0.0f;
@@ -56,17 +46,18 @@ void chassisLtask(void)
 
     if (chassis_move.start_flag == 1)
     {
-      //            canSend_comd(LFmotor, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+			//HT04电机 力矩大于零角度反馈值增大
+//                   canSend_comd(LFmotor, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 
-      //            canSend_comd(LBmotor, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-      canSend_comd(LFmotor, 0.0f, 0.0f, 0.0f, 0.0f, -vmc_L.T_set[1] / 6.0f);
+//                   canSend_comd(LBmotor, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+     canSend_comd(LFmotor, 0.0f, 0.0f, 0.0f, 0.0f, -vmc_L.T_set[1] / 6.0f);
 
-      canSend_comd(LBmotor, 0.0f, 0.0f, 0.0f, 0.0f, -vmc_L.T_set[0] / 6.0f);
+     canSend_comd(LBmotor, 0.0f, 0.0f, 0.0f, 0.0f, -vmc_L.T_set[0] / 6.0f);
 
-      wheel_Lctrl(chassis_move.wheel_motor[0].T_wheel / 6.33f);
-      //						wheel_Lctrl(0.0f);
+//      wheel_Lctrl(chassis_move.wheel_motor[0].T_wheel / 6.33f);
+      						wheel_Lctrl(0.0f);
       //					wheel_Lctrl(0.05f);
-      //					wheel_Lctrl(Ltest);
+//      					wheel_Lctrl(Ltest);
       osDelay(2);
     }
     else if (chassis_move.start_flag == 0)
@@ -122,7 +113,6 @@ void chassisL_init(chassis_t *chassis, vmc_t *vmc, PidTypeDef *legl)
   // 滤波器初始化
   first_order_filter_init(&d_phi1_l_filter, 0.002, d_phi1_l_filter_para);
   first_order_filter_init(&d_phi4_l_filter, 0.002, d_phi4_l_filter_para);
-  first_order_filter_init(&pitch_angle_l_filter, 0.002, pitch_angle_l_filter_para);
   first_order_filter_init(&pitch_gyro_l_filter, 0.002, pitch_gyro_l_filter_para);
 }
 
@@ -134,18 +124,16 @@ void chassisL_update(chassis_t *chassis, vmc_t *vmc, INS_t *ins)
   vmc->d_phi1 = -chassis->joint_motor[1].para.vel;
   vmc->d_phi4 = -chassis->joint_motor[0].para.vel;
 
-  chassis->pitchL = -ins->Pitch;
+  chassis->pitchL = -ins->Pitch + 0.021f; //修正pitch值
   chassis->pitchGyroL = -ins->Gyro[1];
 
   first_order_filter_cali(&d_phi1_l_filter, vmc->d_phi1);
   first_order_filter_cali(&d_phi4_l_filter, vmc->d_phi4);
-  first_order_filter_cali(&pitch_angle_l_filter, chassis->pitchL);
   first_order_filter_cali(&pitch_gyro_l_filter, chassis->pitchGyroL);
 
   // 把滤波后的值赋给vmc
   vmc->d_phi1 = d_phi1_l_filter.out;
   vmc->d_phi4 = d_phi4_l_filter.out;
-  chassis->pitchL = pitch_angle_l_filter.out;
   chassis->pitchGyroL = pitch_gyro_l_filter.out;
   // todo: 倒地检测
 }
@@ -159,10 +147,10 @@ void chassisL_cal(chassis_t *chassis, vmc_t *vmc, INS_t *ins, PidTypeDef *legl, 
     K[i] = LQR_K_cal(&Poly_Coefficient[i][0], vmc->L0);
   }
 
-  chassis->wheel_motor[0].T_wheel = (K[0] * (vmc->theta - 0.0f) + K[1] * (vmc->d_theta - 0.0f) + K[2] * (chassis->x - chassis->x_set) + K[3] * (chassis->v - chassis->v_set) + K[4] * (chassis->pitchL - 0.0f) + K[5] * (chassis->pitchGyroL - 0.0f));
-  vmc->Tp = (K[6] * (vmc->theta - 0.0f) + K[7] * (vmc->d_theta - 0.0f) + K[8] * (chassis->x - chassis->x_set) + K[9] * (chassis->v - chassis->v_set) + K[10] * (chassis->pitchL - 0.0f) + K[11] * (chassis->pitchGyroL - 0.0f));
-  chassis->wheel_motor[0].T_wheel = chassis->wheel_motor[0].T_wheel - chassis->T_turn;
-
+//  chassis->x_set = 0.0f;//x_set 在不断累加，暂时先强制置零
+  chassis->wheel_motor[0].T_wheel = -(K[0] * vmc->theta + K[1] * vmc->d_theta + K[2] * (chassis->x-chassis->x_set) + K[3] * chassis->v + K[4] * chassis->pitchR  + K[5] * chassis->pitchGyroR);
+  vmc->Tp = - (K[6] * vmc->theta + K[7] * vmc->d_theta+ K[8] * (chassis->x - chassis->x_set) + K[9] * chassis->v + K[10] * chassis->pitchR + K[11] * chassis->pitchGyroR);
+  // chassis->wheel_motor[0].T_wheel = chassis->wheel_motor[1].T_wheel - chassis->T_turn;
   //! 防劈叉
   // vmc->Tp = vmc->Tp - chassis->Tp_2legs;
 
