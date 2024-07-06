@@ -52,6 +52,6 @@ void remote_process(RM_Remote_t *remote, chassis_t *chassis, float dt)
         chassis->v_set = 0.0f;
         chassis->x_set = chassis->x;
         chassis->turn_set = chassis->total_yaw;
-        chassis->leg_set = 0.16f;
+        chassis->leg_set = 0.15f;
     }
 }

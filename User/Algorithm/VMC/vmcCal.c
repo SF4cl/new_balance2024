@@ -27,7 +27,7 @@ void VMC_R_cal1(vmc_t *vmc, float bodyPitchAngle,float bodyPitchGyro)
     vmc->d_yB = vmc->l1 * vmc->d_phi1 * arm_cos_f32(vmc->phi1);
     vmc->d_xD = -vmc->l4 * vmc->d_phi4 * arm_sin_f32(vmc->phi4);
     vmc->d_xB = -vmc->l1 * vmc->d_phi1 * arm_sin_f32(vmc->phi1);
-
+    //一些中间变量
     vmc->lBD = sqrtf((vmc->xD - vmc->xB) * (vmc->xD - vmc->xB) + (vmc->yD - vmc->yB) * (vmc->yD - vmc->yB));
     vmc->A0 = 2 * vmc->l2 * (vmc->xD - vmc->xB);
     vmc->B0 = 2 * vmc->l2 * (vmc->yD - vmc->yB);
@@ -48,7 +48,6 @@ void VMC_R_cal1(vmc_t *vmc, float bodyPitchAngle,float bodyPitchGyro)
     vmc->phi0 = atan2f(vmc->yC, vmc->xC - vmc->l5 / 2.0f);
 
     vmc->d_phi0 = -(vmc->d_xc * vmc->yC - vmc->d_yc * (vmc->xC - vmc->l5 / 2.0f)) / (vmc->L0 * vmc->L0);
-    vmc->d_alpha = 0.0f - vmc->d_phi0;
     // ! theta的方向
     vmc->theta = vmc->phi0- pitch - pi/2.0f;
     vmc->d_theta = -pitchGyro + vmc->d_phi0;

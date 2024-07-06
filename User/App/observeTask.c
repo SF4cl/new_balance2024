@@ -12,8 +12,8 @@ KalmanFilter_t vEstimateKF;
 first_order_filter_type_t wheel_r_speed_filter;
 first_order_filter_type_t wheel_l_speed_filter;
 
-float wheel_r_speed_filter_para[1] = {0.01f};
-float wheel_l_speed_filter_para[1] = {0.01f};
+float wheel_r_speed_filter_para[1] = {0.03f};
+float wheel_l_speed_filter_para[1] = {0.03f};
 
 float vEstimateKF_F[4] = {1.0f, 0.002f,
                           0.0f, 1.0f};

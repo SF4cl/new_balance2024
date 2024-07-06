@@ -7,15 +7,15 @@
 
 #define pi 3.1415926f
 
-#define LEG_LEFT_PID_KP  400.0f
+#define LEG_LEFT_PID_KP  0.0f
 #define LEG_LEFT_PID_KI  0.0f
-#define LEG_LEFT_PID_KD  300.0f
+#define LEG_LEFT_PID_KD  0.0f
 #define LEG_LEFT_PID_MAX_OUT  100.0f 
 #define LEG_LEFT_PID_MAX_IOUT 30.0f
 
-#define LEG_RIGHT_PID_KP  400.0f
+#define LEG_RIGHT_PID_KP  0.0f
 #define LEG_RIGHT_PID_KI  0.0f
-#define LEG_RIGHT_PID_KD  300.0f
+#define LEG_RIGHT_PID_KD  0.0f
 #define LEG_RIGHT_PID_MAX_OUT  100.0f 
 #define LEG_RIGHT_PID_MAX_IOUT 30.0f
 
